@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:login_habits_switch/app.dart';
+import 'package:login_habits_switch/bootstrap.dart';
 
 void main() {
-  runApp(const MyApp());
+  bootstrap(() => const MyApp());
 }
