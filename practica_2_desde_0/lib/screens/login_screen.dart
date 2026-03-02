@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -39,14 +40,56 @@ class _LoginScreenState extends State<LoginScreen> {
     _confirm.clear(); // al cambiar de modo, limpiamos confirmación
   }
 
-  void _submit() {
-    // Valida todos los TextFormField del Form
+  // Envía el formulario:
+  // 1) valida campos
+  // 2) si es Sign Up crea usuario en Firebase
+  // 3) si es Login inicia sesión en Firebase
+  // 4) si todo va bien navega a /home
+  Future<void> _submit() async {
+    // 1) Validar todos los TextFormField del Form
     final FormState? form = _formKey.currentState;
     final bool ok = form != null && form.validate();
     if (!ok) return;
 
-    // Aquí NO hay persistencia: si valida, entra.
-    Navigator.pushReplacementNamed(context, '/home');
+    // 2) Leer valores de los controladores
+    final String email = _email.text.trim();
+    final String pass = _pass.text;
+
+    try {
+      // 3) Firebase Auth: registro o login según el modo
+      if (_isSignUp) {
+        await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: email,
+          password: pass,
+        );
+      } else {
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email,
+          password: pass,
+        );
+      }
+
+      // 4) Si el widget ya no está montado, no navegamos ni mostramos nada
+      if (!mounted) return;
+
+      // 5) Login correcto -> ir a Home
+      Navigator.pushReplacementNamed(context, '/home');
+    } on FirebaseAuthException catch (e) {
+      // Errores típicos de Firebase (email mal, usuario no existe, etc.)
+      if (!mounted) return;
+
+      // Convertimos el código técnico a un mensaje entendible
+      final String msg = _firebaseMsg(e.code);
+
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    } catch (_) {
+      // Cualquier otro error no controlado
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Error inesperado')));
+    }
   }
 
   // Validación simple del email
@@ -71,6 +114,28 @@ class _LoginScreenState extends State<LoginScreen> {
     if (value.isEmpty) return 'Confirma la contraseña';
     if (value != _pass.text) return 'Las contraseñas no coinciden';
     return null;
+  }
+
+  // Traduce códigos de error de FirebaseAuth a mensajes simples para el usuario.
+  // e.code viene de FirebaseAuthException (por ejemplo: 'user-not-found', 'wrong-password', etc.).
+  String _firebaseMsg(String code) {
+    switch (code) {
+      case 'invalid-email':
+        return 'Email inválido';
+      case 'user-not-found':
+        return 'No existe una cuenta con ese email';
+      case 'wrong-password':
+        return 'Contraseña incorrecta';
+      case 'email-already-in-use':
+        return 'Ese email ya está registrado';
+      case 'weak-password':
+        return 'Contraseña demasiado débil (mínimo 6 caracteres)';
+      case 'too-many-requests':
+        return 'Demasiados intentos. Prueba más tarde';
+      default:
+        // Cualquier otro error no contemplado
+        return 'No se pudo completar la operación';
+    }
   }
 
   @override
