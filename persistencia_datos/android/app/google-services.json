@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1017652814636",
+    "project_id": "probar-ejemplo",
+    "storage_bucket": "probar-ejemplo.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1017652814636:android:b9b251ad716380c4ed4289",
+        "android_client_info": {
+          "package_name": "com.example.persistencia_datos"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDLXNcy3eTOTc2HkoCVuVcOUv3Hk2OqAFw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

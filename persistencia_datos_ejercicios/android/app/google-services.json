@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "706054864655",
+    "project_id": "fir-ejercicio-crud",
+    "storage_bucket": "fir-ejercicio-crud.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:706054864655:android:e48e4493b5db82d032c87a",
+        "android_client_info": {
+          "package_name": "com.example.persistencia_datos_ejercicios"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB1ZFRvmrtA22ujj8geX5ptC7BazN6xjhY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
