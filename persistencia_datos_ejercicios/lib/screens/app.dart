@@ -18,7 +18,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      initialRoute: "/firebase",
+      initialRoute: "/sqflite_login",
 
       routes: {
         "/home": (context) => const Dashboard(),
