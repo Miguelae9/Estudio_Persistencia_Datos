@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -54,17 +55,29 @@ class _DashboardState extends State<Dashboard> {
       final response = await http.get(
         Uri.parse("https://dummyjson.com/todos/4"),
       );
-      setState(() {
-        _lastTodoId = int.parse(response.body.split('"id":')[1].split(',')[0]);
-        _lastTodoText = response.body.split('"todo":"')[1].split('","')[0];
-        _lastTodoCompleted =
-            response.body.split('"completed":')[1].split('}')[0] == "true";
-      });
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        setState(() {
+          _lastTodoId = data["id"];
+          _lastTodoText = data["todo"];
+          _lastTodoCompleted = data["completed"];
+        });
+      } else {
+        setState(() {
+          _lastTodoId = 0;
+          _lastTodoText = "";
+          _lastTodoCompleted = null;
+          _errorMessage = "Error al cargar el TODO.";
+        });
+      }
     } catch (e) {
       setState(() {
         _lastTodoId = 0;
         _lastTodoText = "";
         _lastTodoCompleted = null;
+        _errorMessage = "Error de conexión o de ejecución.";
       });
     }
   }
@@ -74,21 +87,24 @@ class _DashboardState extends State<Dashboard> {
       final response = await http.get(
         Uri.parse("https://dummyjson.com/todos/$id"),
       );
-      setState(() {
-        _fetchedTodoId = int.parse(
-          response.body.split('"id":')[1].split(',')[0],
-        );
-        _fetchedTodoText = response.body.split('"todo":"')[1].split('","')[0];
-        _fetchedTodoCompleted =
-            response.body.split('"completed":')[1].split('}')[0] == "true";
-        _errorMessage = null;
-      });
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        setState(() {
+          _fetchedTodoId = data["id"];
+          _fetchedTodoText = data["todo"];
+          _fetchedTodoCompleted = data["completed"];
+          _errorMessage = null;
+        });
+      } else {
+        setState(() {
+          _errorMessage = "El servidor devolvió un error.";
+        });
+      }
     } catch (e) {
       setState(() {
-        _fetchedTodoId = 0;
-        _fetchedTodoText = "";
-        _fetchedTodoCompleted = null;
-        _errorMessage = "Failed to fetch TODO with ID $id.";
+        _errorMessage = "Error de conexión o de ejecución.";
       });
     } finally {
       setState(() {

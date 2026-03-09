@@ -15,7 +15,7 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-    String path = '${await getDatabasesPath()}my_database.db';
+    String path = '${await getDatabasesPath()}/my_database.db';
     return await openDatabase(
       path,
       version: 1,
@@ -33,21 +33,35 @@ class DatabaseHelper {
     );
   }
 
-  Future<List<Map<String, dynamic>>> getPrestamos() async {
-    final db = await database;
-    return await db.query('prestamo');
-  }
+  // CRUD
 
+  // CREATE
   Future<int> insertPrestamo(Map<String, dynamic> prestamo) async {
     final db = await database;
     return await db.insert('prestamo', prestamo);
   }
 
-  Future<void> modifyPrestamo(
+  // READ ALL
+  Future<List<Map<String, dynamic>>> getPrestamos() async {
+    final db = await database;
+    return await db.query('prestamo');
+  }
+
+  // READ ONE
+  Future<Map<String, dynamic>?> getPrestamoById(int id) async {
+    final db = await database;
+    final result = await db.query('prestamo', where: 'id = ?', whereArgs: [id]);
+
+    if (result.isEmpty) return null;
+    return result.first;
+  }
+
+  // UPDATE
+  Future<void> updatePrestamo(
     int id,
     Map<String, dynamic> updatedPrestamo,
   ) async {
-    final db = await DatabaseHelper().database;
+    final db = await database;
     await db.update(
       'prestamo',
       updatedPrestamo,
@@ -56,21 +70,27 @@ class DatabaseHelper {
     );
   }
 
+  // DELETE
   Future<void> deletePrestamo(int id) async {
-    final db = await DatabaseHelper().database;
+    final db = await database;
     await db.delete('prestamo', where: 'id = ?', whereArgs: [id]);
   }
 
+  // EXTRA
+
+  // DELETE ALL
   Future<void> deleteAllPrestamos() async {
-    final db = await DatabaseHelper().database;
+    final db = await database;
     await db.delete('prestamo');
   }
 
+  // GET PENDING
   Future<List<Map<String, dynamic>>> pendingPrestamos() async {
     final db = await database;
     return await db.query('prestamo', where: 'status = ?', whereArgs: [0]);
   }
 
+  // EXAMPLE DATA
   Future<void> examplePrestamos() async {
     final db = await database;
 
@@ -128,16 +148,12 @@ class _PrestamoListScreenState extends State<PrestamoListScreen> {
 
   Future<void> _initData() async {
     await _databaseHelper.examplePrestamos();
-    await _loadPrestamos();
+    await _readPrestamos();
   }
 
-  Future<void> _loadPrestamos() async {
-    final prestamos = await _databaseHelper.getPrestamos();
-    setState(() {
-      _prestamos = prestamos;
-    });
-  }
+  // CRUD
 
+  // CREATE
   Future<void> _addPrestamo() async {
     TextEditingController nameController = TextEditingController();
     TextEditingController titleController = TextEditingController();
@@ -213,15 +229,65 @@ class _PrestamoListScreenState extends State<PrestamoListScreen> {
         );
       },
     );
-    await _loadPrestamos();
+    await _readPrestamos();
   }
 
-  Future<void> _deletePrestamo(int id) async {
-    await _databaseHelper.deletePrestamo(id);
-    await _loadPrestamos();
+  // READ
+  Future<void> _readPrestamos() async {
+    final prestamos = await _databaseHelper.getPrestamos();
+    setState(() {
+      _prestamos = prestamos;
+    });
   }
 
-  Future<void> _modifyPrestamo(int id) async {
+  // READ ONE
+  Future<void> _readPrestamoById() async {
+    TextEditingController idController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Search Prestamo by ID"),
+          content: TextField(
+            controller: idController,
+            decoration: const InputDecoration(labelText: "Prestamo ID"),
+            keyboardType: TextInputType.number,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () async {
+                final id = int.tryParse(idController.text);
+
+                if (id != null) {
+                  final prestamo = await _databaseHelper.getPrestamoById(id);
+
+                  if (!mounted) return;
+
+                  setState(() {
+                    _prestamos = prestamo != null ? [prestamo] : [];
+                    _showingPending = false;
+                  });
+                  if(!context.mounted) return;
+                  Navigator.of(context).pop();
+                }
+              },
+              child: const Text("Search"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // UPDATE
+  Future<void> _updatePrestamo(int id) async {
     final matches = _prestamos.where((p) => p['id'] == id);
     if (matches.isEmpty) return;
     final prestamo = matches.first;
@@ -290,7 +356,7 @@ class _PrestamoListScreenState extends State<PrestamoListScreen> {
                 if (nameController.text.isNotEmpty &&
                     titleController.text.isNotEmpty &&
                     days != null) {
-                  await _databaseHelper.modifyPrestamo(prestamo['id'], {
+                  await _databaseHelper.updatePrestamo(prestamo['id'], {
                     'name': nameController.text,
                     'title': titleController.text,
                     'days': days,
@@ -306,10 +372,19 @@ class _PrestamoListScreenState extends State<PrestamoListScreen> {
         );
       },
     );
-    await _loadPrestamos();
+    await _readPrestamos();
   }
 
-  Future<void> _pendingPrestamos() async {
+  // DELETE
+  Future<void> _deletePrestamo(int id) async {
+    await _databaseHelper.deletePrestamo(id);
+    await _readPrestamos();
+  }
+
+  // EXTRA
+
+  // TOGGLE PENDING
+  Future<void> _togglePendingPrestamos() async {
     if (_showingPending) {
       final prestamos = await _databaseHelper.getPrestamos();
       setState(() {
@@ -329,56 +404,54 @@ class _PrestamoListScreenState extends State<PrestamoListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Prestamos")),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-
-          children: [
-            Expanded(
-              child: ListView.builder(
-                itemCount: _prestamos.length,
-                itemBuilder: (context, index) {
-                  final prestamo = _prestamos[index];
-                  return ListTile(
-                    title: Text('${prestamo['title']} (${prestamo['id']})'),
-                    subtitle: Text(
-                      'Nombre: ${prestamo['name']}\n'
-                      'Días: ${prestamo['days']}\n'
-                      'Estado: ${prestamo['status'] == 1 ? 'Devuelto' : 'Pendiente'}',
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: () => _deletePrestamo(prestamo['id']),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () => _modifyPrestamo(prestamo['id']),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              itemCount: _prestamos.length,
+              itemBuilder: (context, index) {
+                final prestamo = _prestamos[index];
+                return ListTile(
+                  title: Text('${prestamo['title']} (${prestamo['id']})'),
+                  subtitle: Text(
+                    'Nombre: ${prestamo['name']}\n'
+                    'Días: ${prestamo['days']}\n'
+                    'Estado: ${prestamo['status'] == 1 ? 'Devuelto' : 'Pendiente'}',
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.delete),
+                        onPressed: () => _deletePrestamo(prestamo['id']),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.edit),
+                        onPressed: () => _updatePrestamo(prestamo['id']),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(icon: const Icon(Icons.add), onPressed: _addPrestamo),
+              const SizedBox(width: 20),
+              IconButton(
+                icon: const Icon(Icons.pending),
+                onPressed: _togglePendingPrestamos,
               ),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: _addPrestamo,
-                ),
-                SizedBox(height: 20),
-                IconButton(
-                  icon: const Icon(Icons.pending),
-                  onPressed: _pendingPrestamos,
-                ),
-              ],
-            ),
-          ],
-        ),
+              const SizedBox(width: 20),
+              IconButton(
+                icon: const Icon(Icons.search),
+                onPressed: _readPrestamoById,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

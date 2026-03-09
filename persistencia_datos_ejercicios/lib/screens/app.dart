@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:persistencia_datos_ejercicios/screens/auto_refresh.dart';
-import 'package:persistencia_datos_ejercicios/screens/crud_firebase.dart';
+import 'package:persistencia_datos_ejercicios/screens/firebase_crud.dart';
 import 'package:persistencia_datos_ejercicios/screens/home_screen.dart';
 import 'package:persistencia_datos_ejercicios/screens/path_provider.dart';
-import 'package:persistencia_datos_ejercicios/screens/sqflite.dart';
+import 'package:persistencia_datos_ejercicios/screens/sqflite_crud.dart';
+import 'package:persistencia_datos_ejercicios/screens/sqflite_login.dart';
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -24,6 +25,7 @@ class _MyAppState extends State<MyApp> {
         "/refresh": (context) => const AutoRefresh(),
         "/path": (context) => const PathProvider(),
         "/sqflite": (context) => const PrestamoListScreen(),
+        "/sqflite_login": (context) => const SqfliteLoginScreen(),
         "/firebase": (context) => const CrudFirebaseScreen(),
       },
     );
