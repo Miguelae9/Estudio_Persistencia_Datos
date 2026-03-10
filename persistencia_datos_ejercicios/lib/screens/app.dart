@@ -3,6 +3,7 @@ import 'package:persistencia_datos_ejercicios/screens/auto_refresh.dart';
 import 'package:persistencia_datos_ejercicios/screens/firebase_crud.dart';
 import 'package:persistencia_datos_ejercicios/screens/firebase_login.dart';
 import 'package:persistencia_datos_ejercicios/screens/home_screen.dart';
+import 'package:persistencia_datos_ejercicios/screens/json_assets.dart';
 import 'package:persistencia_datos_ejercicios/screens/modo_oscuro_shared_preferences.dart';
 import 'package:persistencia_datos_ejercicios/screens/path_provider.dart';
 import 'package:persistencia_datos_ejercicios/screens/sqflite_crud.dart';
@@ -44,7 +45,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      initialRoute: "/modo_oscuro",
+      initialRoute: "/json",
 
       // TEMA CLARO
       theme: ThemeData(
@@ -71,6 +72,7 @@ class _MyAppState extends State<MyApp> {
 
       routes: {
         "/home": (context) => const Dashboard(),
+        "/json": (context) => const ClientesScreen(),
         "/refresh": (context) => const AutoRefresh(),
         "/path": (context) => const PathProvider(),
         "/sqflite": (context) => const PrestamoListScreen(),

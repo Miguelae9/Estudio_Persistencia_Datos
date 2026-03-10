@@ -1,0 +1,30 @@
+[
+    {
+        "id": 1,
+        "nombre": "Carlos Pérez",
+        "email": "carlos@example.com",
+        "edad": 28,
+        "ciudad": "Málaga"
+    },
+    {
+        "id": 2,
+        "nombre": "Lucía Gómez",
+        "email": "lucia@example.com",
+        "edad": 24,
+        "ciudad": "Sevilla"
+    },
+    {
+        "id": 3,
+        "nombre": "Miguel Torres",
+        "email": "miguel@example.com",
+        "edad": 31,
+        "ciudad": "Granada"
+    },
+    {
+        "id": 4,
+        "nombre": "Ana Ruiz",
+        "email": "ana@example.com",
+        "edad": 26,
+        "ciudad": "Córdoba"
+    }
+]
