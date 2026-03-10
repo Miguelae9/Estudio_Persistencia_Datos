@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
 class DatabaseHelper {
@@ -31,7 +32,9 @@ class DatabaseHelper {
     );
   }
 
-  // CREATE USER
+  // =========================
+  // SQFLITE - CREATE USER
+  // =========================
   Future<int> createUser(String username, String password) async {
     final db = await database;
     return await db.insert('users', {
@@ -40,13 +43,17 @@ class DatabaseHelper {
     });
   }
 
-  // READ ALL USERS
+  // =========================
+  // SQFLITE - READ ALL USERS
+  // =========================
   Future<List<Map<String, dynamic>>> getUsers() async {
     final db = await database;
     return await db.query('users');
   }
 
-  // READ ONE USER BY USERNAME
+  // =========================
+  // SQFLITE - READ ONE USER
+  // =========================
   Future<Map<String, dynamic>?> getUserByUsername(String username) async {
     final db = await database;
 
@@ -60,7 +67,9 @@ class DatabaseHelper {
     return result.first;
   }
 
-  // LOGIN
+  // =========================
+  // SQFLITE - LOGIN
+  // =========================
   Future<Map<String, dynamic>?> login(String username, String password) async {
     final db = await database;
 
@@ -74,7 +83,9 @@ class DatabaseHelper {
     return result.first;
   }
 
-  // EXAMPLE USERS
+  // =========================
+  // SQFLITE - EXAMPLE USERS
+  // =========================
   Future<void> exampleUsers() async {
     final db = await database;
 
@@ -104,6 +115,8 @@ class _SqfliteLoginScreenState extends State<SqfliteLoginScreen> {
   TextEditingController usernameController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
 
+  bool rememberUser = false;
+
   @override
   void initState() {
     super.initState();
@@ -119,9 +132,103 @@ class _SqfliteLoginScreenState extends State<SqfliteLoginScreen> {
 
   Future<void> _initUsers() async {
     await dbHelper.exampleUsers();
+    await _loadRememberedUser();
   }
 
-  // LOGIN
+  // ==========================================
+  // SHARED PREFERENCES - LOAD SAVED USER
+  // Carga el usuario guardado anteriormente
+  // ==========================================
+  Future<void> _loadRememberedUser() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    String? savedUsername = prefs.getString('saved_username');
+    String? savedPassword = prefs.getString('saved_password');
+    bool savedRemember = prefs.getBool('remember_user') ?? false;
+
+    if (savedRemember) {
+      setState(() {
+        usernameController.text = savedUsername ?? '';
+        passwordController.text = savedPassword ?? '';
+        rememberUser = true;
+      });
+
+      // LOGIN AUTOMÁTICO
+      if (savedUsername != null && savedPassword != null) {
+        final user = await dbHelper.login(savedUsername, savedPassword);
+
+        if (user != null && mounted) {
+          Navigator.pushReplacementNamed(context, "/sqflite");
+        }
+      }
+    }
+  }
+
+  // ==========================================
+  // SHARED PREFERENCES - SAVE USER
+  // Guarda usuario y contraseña si el checkbox
+  // "Remember user" está activado
+  // ==========================================
+  Future<void> _saveRememberedUser(String username, String password) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString('saved_username', username);
+    await prefs.setString('saved_password', password);
+    await prefs.setBool('remember_user', true);
+  }
+
+  // ==========================================
+  // SHARED PREFERENCES - CLEAR SAVED USER
+  // Borra los datos guardados si el usuario
+  // no quiere ser recordado
+  // ==========================================
+  Future<void> _clearRememberedUser() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.remove('saved_username');
+    await prefs.remove('saved_password');
+    await prefs.setBool('remember_user', false);
+  }
+
+  // ==========================================
+  // SCREEN LOGIC - REGISTER
+  // Lee la pantalla, valida y llama a sqflite
+  // ==========================================
+  Future<void> _register() async {
+    String username = usernameController.text.trim();
+    String password = passwordController.text.trim();
+
+    if (username.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Fill in all fields")));
+      return;
+    }
+
+    final existingUser = await dbHelper.getUserByUsername(username);
+
+    if (!mounted) return;
+
+    if (existingUser != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Username already exists")));
+      return;
+    }
+
+    await dbHelper.createUser(username, password);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("User registered successfully")),
+    );
+  }
+
+  // ==========================================
+  // SCREEN LOGIC - LOGIN
+  // Lee la pantalla, valida y llama a sqflite
+  // ==========================================
   Future<void> _login() async {
     String username = usernameController.text.trim();
     String password = passwordController.text.trim();
@@ -138,7 +245,19 @@ class _SqfliteLoginScreenState extends State<SqfliteLoginScreen> {
     if (!mounted) return;
 
     if (user != null) {
-      Navigator.pushNamed(context, "/sqflite");
+      // ==========================================
+      // SHARED PREFERENCES - SAVE OR CLEAR
+      // Si rememberUser está activo, guarda datos.
+      // Si no, borra los datos guardados.
+      // ==========================================
+      if (rememberUser) {
+        await _saveRememberedUser(username, password);
+      } else {
+        await _clearRememberedUser();
+      }
+
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, "/sqflite");
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Invalid username or password")),
@@ -164,8 +283,20 @@ class _SqfliteLoginScreenState extends State<SqfliteLoginScreen> {
               decoration: const InputDecoration(labelText: "Password"),
               obscureText: true,
             ),
+            CheckboxListTile(
+              title: const Text("Remember me"),
+              value: rememberUser,
+              onChanged: (value) {
+                setState(() {
+                  rememberUser = value ?? false;
+                });
+              },
+              controlAffinity: ListTileControlAffinity.leading,
+            ),
             const SizedBox(height: 20),
             ElevatedButton(onPressed: _login, child: const Text("Login")),
+            const SizedBox(height: 10),
+            ElevatedButton(onPressed: _register, child: const Text("Register")),
           ],
         ),
       ),

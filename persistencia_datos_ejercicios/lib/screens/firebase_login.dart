@@ -46,6 +46,12 @@ class _FirebaseLoginScreenState extends State<FirebaseLoginScreen> {
 
   String message = "";
 
+  @override
+  void initState() {
+    super.initState();
+    _checkIfUserIsLoggedIn();
+  }
+
   Future<void> _register() async {
     String email = emailController.text.trim();
     String password = passwordController.text.trim();
@@ -83,7 +89,7 @@ class _FirebaseLoginScreenState extends State<FirebaseLoginScreen> {
     try {
       await dbHelper.loginUser(email, password);
       if (!mounted) return;
-      Navigator.pushNamed(context, "/firebase");
+      Navigator.pushReplacementNamed(context, "/firebase");
     } catch (e) {
       setState(() {
         message = "Login failed: ${e.toString()}";
@@ -109,6 +115,17 @@ class _FirebaseLoginScreenState extends State<FirebaseLoginScreen> {
       }
     });
   }
+
+  Future<void> _checkIfUserIsLoggedIn() async {
+  User? user = dbHelper.getCurrentUser();
+
+  if (user != null) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, "/firebase");
+    });
+  }
+}
 
   @override
   void dispose() {
