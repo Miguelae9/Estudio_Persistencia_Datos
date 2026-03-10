@@ -138,9 +138,7 @@ class _SqfliteLoginScreenState extends State<SqfliteLoginScreen> {
     if (!mounted) return;
 
     if (user != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Login successful!")));
+      Navigator.pushNamed(context, "/sqflite");
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Invalid username or password")),

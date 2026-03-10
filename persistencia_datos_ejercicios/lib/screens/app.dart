@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:persistencia_datos_ejercicios/screens/auto_refresh.dart';
 import 'package:persistencia_datos_ejercicios/screens/firebase_crud.dart';
+import 'package:persistencia_datos_ejercicios/screens/firebase_login.dart';
 import 'package:persistencia_datos_ejercicios/screens/home_screen.dart';
 import 'package:persistencia_datos_ejercicios/screens/path_provider.dart';
 import 'package:persistencia_datos_ejercicios/screens/sqflite_crud.dart';
@@ -18,7 +19,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      initialRoute: "/sqflite_login",
+      initialRoute: "/firebase_login",
 
       routes: {
         "/home": (context) => const Dashboard(),
@@ -27,6 +28,7 @@ class _MyAppState extends State<MyApp> {
         "/sqflite": (context) => const PrestamoListScreen(),
         "/sqflite_login": (context) => const SqfliteLoginScreen(),
         "/firebase": (context) => const CrudFirebaseScreen(),
+        "/firebase_login": (context) => const FirebaseLoginScreen(),
       },
     );
   }
